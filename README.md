@@ -27,6 +27,13 @@ On the first start the admin user and demo data are created automatically. Set S
 4. Set environment variables: MONGODB_URI, ADMIN_EMAIL, ADMIN_PASSWORD (JWT_SECRET is generated).
 5. Open the Render URL and sign in.
 
+## Deploy on Vercel
+1. Push this folder to a GitHub repository.
+2. In MongoDB Atlas: Network Access, add 0.0.0.0/0.
+3. On Vercel: Add New, Project, import the repository. Leave the framework preset as Other (vercel.json sets the build).
+4. Add environment variables: MONGODB_URI, JWT_SECRET, ADMIN_EMAIL, ADMIN_PASSWORD.
+5. Deploy, then open the Vercel URL and sign in. Check /api/health to confirm the API is running.
+
 ## API (all routes except login need the Authorization: Bearer token header)
 POST /api/auth/login
 GET POST /api/products, PUT DELETE /api/products/:id, POST /api/products/:id/stock

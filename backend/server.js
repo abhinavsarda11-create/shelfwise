@@ -26,6 +26,41 @@ const connect = () => {
 };
 
 app.get('/api/health', (req, res) => res.json({ ok: true }));
+app.get('/api/health/db', async (req, res) => {
+  const raw = process.env.MONGODB_URI || '';
+  const noScheme = raw.trim().replace(/^mongodb(\+srv)?:\/\//, '');
+  const at = noScheme.lastIndexOf('@');
+  const creds = at === -1 ? '' : noScheme.slice(0, at);
+  const hostPart = at === -1 ? noScheme : noScheme.slice(at + 1);
+  const colon = creds.indexOf(':');
+  const user = colon === -1 ? creds : creds.slice(0, colon);
+  const pass = colon === -1 ? '' : creds.slice(colon + 1);
+  let connection = 'not tested';
+  if (raw) {
+    try {
+      const conn = mongoose.createConnection(raw, { serverSelectionTimeoutMS: 8000 });
+      await conn.asPromise();
+      connection = 'connected';
+      await conn.close();
+    } catch (error) {
+      connection = error.message;
+    }
+  }
+  res.json({
+    uriIsSet: Boolean(raw),
+    jwtSecretIsSet: Boolean(process.env.JWT_SECRET),
+    startsWithMongodb: /^mongodb(\+srv)?:\/\//.test(raw),
+    hasSpaceOrQuoteAtEdges: raw !== raw.trim() || /^["']|["']$/.test(raw),
+    hasAngleBrackets: /[<>]/.test(raw),
+    atSignCount: (raw.match(/@/g) || []).length,
+    username: user,
+    passwordLength: pass.length,
+    passwordHasSpecialCharacters: /[^A-Za-z0-9]/.test(pass),
+    host: hostPart.split('/')[0],
+    database: (hostPart.split('/')[1] || '').split('?')[0],
+    connection,
+  });
+});
 app.use('/api', (req, res, next) => connect().then(() => next(), next));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api', auth);
